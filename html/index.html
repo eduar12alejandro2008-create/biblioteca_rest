@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<title>Biblioteca API</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:#0f172a;color:#e2e8f0;min-height:100vh}
+header{background:#1e3a5f;padding:1rem 2rem;display:flex;align-items:center;gap:1rem;border-bottom:2px solid #2563eb}
+header h1{font-size:1.3rem;color:#60a5fa}
+header span{color:#475569;font-size:.8rem}
+.layout{display:grid;grid-template-columns:200px 1fr;min-height:calc(100vh - 56px)}
+nav{background:#1e293b;padding:.5rem 0;border-right:1px solid #334155}
+nav button{display:block;width:100%;text-align:left;padding:.65rem 1rem;background:none;border:none;color:#94a3b8;cursor:pointer;font-size:.85rem;transition:all .15s}
+nav button:hover,nav button.active{background:#334155;color:#60a5fa;border-left:3px solid #2563eb}
+nav .sep{padding:.5rem 1rem .25rem;font-size:.65rem;text-transform:uppercase;color:#475569;letter-spacing:.05em}
+main{padding:1.5rem;overflow-y:auto}
+.token-bar{background:#1e293b;border:1px solid #334155;border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
+.token-bar small{color:#475569;font-size:.75rem}
+#tokenDisplay{background:#064e3b;color:#6ee7b7;padding:.2rem .6rem;border-radius:12px;font-size:.72rem;word-break:break-all;max-width:500px}
+.panel{background:#1e293b;border-radius:10px;padding:1.25rem;margin-bottom:1rem;border:1px solid #334155}
+.panel h2{font-size:.9rem;color:#60a5fa;margin-bottom:.75rem;padding-bottom:.5rem;border-bottom:1px solid #334155;display:flex;align-items:center;gap:.5rem}
+.badge{display:inline-block;padding:.15rem .45rem;border-radius:4px;font-size:.65rem;font-weight:700}
+.GET{background:#064e3b;color:#6ee7b7}.POST{background:#1e3a5f;color:#93c5fd}.PUT{background:#78350f;color:#fcd34d}.DELETE{background:#7f1d1d;color:#fca5a5}
+.form-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.6rem;margin-bottom:.75rem}
+label{font-size:.75rem;color:#94a3b8;display:block;margin-bottom:.2rem}
+input,select,textarea{width:100%;padding:.4rem .6rem;background:#0f172a;border:1px solid #334155;border-radius:6px;color:#e2e8f0;font-size:.83rem}
+input:focus,select:focus,textarea:focus{outline:none;border-color:#2563eb}
+.btn{padding:.4rem 1rem;border:none;border-radius:6px;cursor:pointer;font-size:.8rem;font-weight:600;transition:opacity .15s}
+.btn:hover{opacity:.8}
+.b-blue{background:#2563eb;color:#fff}.b-green{background:#16a34a;color:#fff}.b-red{background:#dc2626;color:#fff}.b-yellow{background:#d97706;color:#fff}.b-sm{padding:.25rem .6rem;font-size:.72rem}
+.result{background:#0f172a;border:1px solid #1e293b;border-radius:6px;padding:.75rem;margin-top:.75rem;font-size:.75rem;white-space:pre-wrap;max-height:220px;overflow-y:auto;color:#a3e635;font-family:monospace}
+.result.err{color:#f87171}
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 Biblioteca API</h1>
+  <span>localhost:4000</span>
+</header>
+<div class="layout">
+<nav>
+  <div class="sep">Auth</div>
+  <button class="active" onclick="show('auth',this)">🔐 Auth</button>
+  <div class="sep">Recursos</div>
+  <button onclick="show('authors',this)">✍️ Autores</button>
+  <button onclick="show('books',this)">📖 Libros</button>
+  <button onclick="show('readers',this)">👤 Lectores</button>
+  <button onclick="show('loans',this)">📋 Préstamos</button>
+</nav>
+<main>
+
+<div class="token-bar">
+  <small>Token:</small>
+  <span id="tokenDisplay">sin token</span>
+  <button class="btn b-red b-sm" onclick="clearToken()">Limpiar</button>
+</div>
+
+<!-- AUTH -->
+<div id="sec-auth">
+  <div class="panel">
+    <h2><span class="badge POST">POST</span> /api/auth/register</h2>
+    <div class="form-row">
+      <div><label>Nombre</label><input id="r-nombre" placeholder="Juan García"/></div>
+      <div><label>Email</label><input id="r-email" type="email" placeholder="juan@mail.com"/></div>
+      <div><label>Password</label><input id="r-pass" type="password" placeholder="••••••"/></div>
+      <div><label>Rol</label><select id="r-rol"><option value="librarian">librarian</option><option value="admin">admin</option></select></div>
+    </div>
+    <button class="btn b-green" onclick="register()">Registrar</button>
+    <div class="result" id="res-reg"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge POST">POST</span> /api/auth/login</h2>
+    <div class="form-row">
+      <div><label>Email</label><input id="l-email" type="email" placeholder="juan@mail.com"/></div>
+      <div><label>Password</label><input id="l-pass" type="password" placeholder="••••••"/></div>
+    </div>
+    <button class="btn b-blue" onclick="login()">Login</button>
+    <div class="result" id="res-login"></div>
+  </div>
+</div>
+
+<!-- AUTORES -->
+<div id="sec-authors" style="display:none">
+  <div class="panel">
+    <h2><span class="badge GET">GET</span> /api/authors</h2>
+    <button class="btn b-blue" onclick="req('GET','/authors',null,'res-aut-all')">Obtener todos</button>
+    <div class="result" id="res-aut-all"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge GET">GET</span> /api/authors/:id</h2>
+    <div class="form-row"><div><label>ID</label><input id="aut-get-id" placeholder="ObjectId"/></div></div>
+    <button class="btn b-blue" onclick="reqId('GET','/authors','aut-get-id',null,'res-aut-one')">Buscar</button>
+    <div class="result" id="res-aut-one"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge POST">POST</span> /api/authors</h2>
+    <div class="form-row">
+      <div><label>Nombre *</label><input id="aut-nombre" placeholder="Gabriel García Márquez"/></div>
+      <div><label>Nacionalidad</label><input id="aut-nac" placeholder="Colombiano"/></div>
+      <div><label>Fecha nacimiento</label><input id="aut-fecha" type="date"/></div>
+    </div>
+    <button class="btn b-green" onclick="req('POST','/authors',{nombre:v('aut-nombre'),nacionalidad:v('aut-nac'),fechaNacimiento:v('aut-fecha')||undefined},'res-aut-post')">Crear</button>
+    <div class="result" id="res-aut-post"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge PUT">PUT</span> /api/authors/:id</h2>
+    <div class="form-row">
+      <div><label>ID</label><input id="aut-put-id" placeholder="ObjectId"/></div>
+      <div><label>Nombre</label><input id="aut-put-nombre" placeholder="Nuevo nombre"/></div>
+      <div><label>Nacionalidad</label><input id="aut-put-nac" placeholder="Nacionalidad"/></div>
+    </div>
+    <button class="btn b-yellow" onclick="reqId('PUT','/authors','aut-put-id',{nombre:v('aut-put-nombre')||undefined,nacionalidad:v('aut-put-nac')||undefined},'res-aut-put')">Actualizar</button>
+    <div class="result" id="res-aut-put"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge DELETE">DELETE</span> /api/authors/:id</h2>
+    <div class="form-row"><div><label>ID</label><input id="aut-del-id" placeholder="ObjectId"/></div></div>
+    <button class="btn b-red" onclick="del('/authors','aut-del-id','res-aut-del')">Eliminar</button>
+    <div class="result" id="res-aut-del"></div>
+  </div>
+</div>
+
+<!-- LIBROS -->
+<div id="sec-books" style="display:none">
+  <div class="panel">
+    <h2><span class="badge GET">GET</span> /api/books</h2>
+    <button class="btn b-blue" onclick="req('GET','/books',null,'res-bk-all')">Obtener todos</button>
+    <div class="result" id="res-bk-all"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge GET">GET</span> /api/books/:id</h2>
+    <div class="form-row"><div><label>ID</label><input id="bk-get-id" placeholder="ObjectId"/></div></div>
+    <button class="btn b-blue" onclick="reqId('GET','/books','bk-get-id',null,'res-bk-one')">Buscar</button>
+    <div class="result" id="res-bk-one"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge POST">POST</span> /api/books</h2>
+    <div class="form-row">
+      <div><label>Título *</label><input id="bk-titulo" placeholder="Don Quijote"/></div>
+      <div><label>ISBN *</label><input id="bk-isbn" placeholder="978-..."/></div>
+      <div><label>Género *</label><select id="bk-genero"><option value="fiction">fiction</option><option value="non-fiction">non-fiction</option><option value="sci-fi">sci-fi</option><option value="history">history</option><option value="other">other</option></select></div>
+      <div><label>Año</label><input id="bk-anio" type="number" placeholder="2024"/></div>
+      <div><label>Copias</label><input id="bk-copias" type="number" value="1"/></div>
+      <div><label>Author ID *</label><input id="bk-author" placeholder="ObjectId del autor"/></div>
+    </div>
+    <button class="btn b-green" onclick="createBook()">Crear libro</button>
+    <div class="result" id="res-bk-post"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge PUT">PUT</span> /api/books/:id</h2>
+    <div class="form-row">
+      <div><label>ID</label><input id="bk-put-id" placeholder="ObjectId"/></div>
+      <div style="grid-column:span 2"><label>Body JSON</label><textarea id="bk-put-body" rows="2" placeholder='{"titulo":"Nuevo título","copiasDisponibles":5}'></textarea></div>
+    </div>
+    <button class="btn b-yellow" onclick="reqIdJson('PUT','/books','bk-put-id','bk-put-body','res-bk-put')">Actualizar</button>
+    <div class="result" id="res-bk-put"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge DELETE">DELETE</span> /api/books/:id</h2>
+    <div class="form-row"><div><label>ID</label><input id="bk-del-id" placeholder="ObjectId"/></div></div>
+    <button class="btn b-red" onclick="del('/books','bk-del-id','res-bk-del')">Eliminar</button>
+    <div class="result" id="res-bk-del"></div>
+  </div>
+</div>
+
+<!-- LECTORES -->
+<div id="sec-readers" style="display:none">
+  <div class="panel">
+    <h2><span class="badge GET">GET</span> /api/readers</h2>
+    <button class="btn b-blue" onclick="req('GET','/readers',null,'res-rd-all')">Obtener todos</button>
+    <div class="result" id="res-rd-all"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge GET">GET</span> /api/readers/:id</h2>
+    <div class="form-row"><div><label>ID</label><input id="rd-get-id" placeholder="ObjectId"/></div></div>
+    <button class="btn b-blue" onclick="reqId('GET','/readers','rd-get-id',null,'res-rd-one')">Buscar</button>
+    <div class="result" id="res-rd-one"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge POST">POST</span> /api/readers</h2>
+    <div class="form-row">
+      <div><label>Nombre *</label><input id="rd-nombre" placeholder="Ana Pérez"/></div>
+      <div><label>Email *</label><input id="rd-email" type="email" placeholder="ana@mail.com"/></div>
+      <div><label>Membresía</label><select id="rd-mem"><option value="standard">standard</option><option value="premium">premium</option></select></div>
+    </div>
+    <button class="btn b-green" onclick="req('POST','/readers',{nombre:v('rd-nombre'),email:v('rd-email'),membresia:v('rd-mem')},'res-rd-post')">Crear lector</button>
+    <div class="result" id="res-rd-post"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge PUT">PUT</span> /api/readers/:id</h2>
+    <div class="form-row">
+      <div><label>ID</label><input id="rd-put-id" placeholder="ObjectId"/></div>
+      <div style="grid-column:span 2"><label>Body JSON</label><textarea id="rd-put-body" rows="2" placeholder='{"activo":false}'></textarea></div>
+    </div>
+    <button class="btn b-yellow" onclick="reqIdJson('PUT','/readers','rd-put-id','rd-put-body','res-rd-put')">Actualizar</button>
+    <div class="result" id="res-rd-put"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge DELETE">DELETE</span> /api/readers/:id</h2>
+    <div class="form-row"><div><label>ID</label><input id="rd-del-id" placeholder="ObjectId"/></div></div>
+    <button class="btn b-red" onclick="del('/readers','rd-del-id','res-rd-del')">Eliminar</button>
+    <div class="result" id="res-rd-del"></div>
+  </div>
+</div>
+
+<!-- PRÉSTAMOS -->
+<div id="sec-loans" style="display:none">
+  <div class="panel">
+    <h2><span class="badge GET">GET</span> /api/loans</h2>
+    <div class="form-row">
+      <div><label>Filtro estado</label><select id="ln-filter"><option value="">todos</option><option value="active">active</option><option value="returned">returned</option><option value="overdue">overdue</option></select></div>
+    </div>
+    <button class="btn b-blue" onclick="getLoans()">Obtener todos</button>
+    <div class="result" id="res-ln-all"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge GET">GET</span> /api/loans/:id</h2>
+    <div class="form-row"><div><label>ID</label><input id="ln-get-id" placeholder="ObjectId"/></div></div>
+    <button class="btn b-blue" onclick="reqId('GET','/loans','ln-get-id',null,'res-ln-one')">Buscar</button>
+    <div class="result" id="res-ln-one"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge POST">POST</span> /api/loans</h2>
+    <div class="form-row">
+      <div><label>Book ID *</label><input id="ln-book" placeholder="ObjectId del libro"/></div>
+      <div><label>Reader ID *</label><input id="ln-reader" placeholder="ObjectId del lector"/></div>
+      <div><label>Fecha préstamo *</label><input id="ln-fp" type="date"/></div>
+      <div><label>Fecha devolución esperada *</label><input id="ln-fde" type="date"/></div>
+      <div><label>Notas</label><input id="ln-notas" placeholder="Opcional"/></div>
+    </div>
+    <button class="btn b-green" onclick="createLoan()">Crear préstamo</button>
+    <div class="result" id="res-ln-post"></div>
+  </div>
+  <div class="panel">
+    <h2><span class="badge PUT">PUT</span> /api/loans/:id/status</h2>
+    <div class="form-row">
+      <div><label>ID</label><input id="ln-put-id" placeholder="ObjectId"/></div>
+      <div><label>Estado</label><select id="ln-estado"><option value="active">active</option><option value="returned">returned</option><option value="overdue">overdue</option></select></div>
+    </div>
+    <button class="btn b-yellow" onclick="updateLoan()">Actualizar estado</button>
+    <div class="result" id="res-ln-put"></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<script>
+const BASE = 'http://localhost:4000/api';
+let token = '';
+
+function v(id){ return document.getElementById(id).value.trim(); }
+function show(name,btn){
+  ['auth','authors','books','readers','loans'].forEach(s=>document.getElementById('sec-'+s).style.display=s===name?'block':'none');
+  document.querySelectorAll('nav button').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+}
+function clearToken(){ token=''; document.getElementById('tokenDisplay').textContent='sin token'; }
+function hdrs(){ const h={'Content-Type':'application/json'}; if(token) h['Authorization']='Bearer '+token; return h; }
+function display(id,data,ok=true){
+  const el=document.getElementById(id);
+  el.textContent=JSON.stringify(data,null,2);
+  el.className='result'+(ok?'':' err');
+}
+
+async function req(method,url,body,resId){
+  try{
+    const opts={method,headers:hdrs()};
+    if(body) opts.body=JSON.stringify(clean(body));
+    const r=await fetch(BASE+url,opts);
+    const d=await r.json();
+    display(resId,d,r.ok);
+    return d;
+  }catch(e){ document.getElementById(resId).textContent='❌ '+e.message+'\n¿Servidor corriendo en localhost:4000?'; document.getElementById(resId).className='result err'; }
+}
+function clean(o){ return Object.fromEntries(Object.entries(o).filter(([,v])=>v!==undefined&&v!=='')); }
+async function reqId(method,url,idInput,body,resId){
+  const id=v(idInput); if(!id) return alert('Ingresa un ID');
+  await req(method,url+'/'+id,body,resId);
+}
+async function reqIdJson(method,url,idInput,bodyInput,resId){
+  const id=v(idInput); if(!id) return alert('Ingresa un ID');
+  let body; try{ body=JSON.parse(document.getElementById(bodyInput).value); }catch{ return alert('JSON inválido'); }
+  await req(method,url+'/'+id,body,resId);
+}
+async function del(url,idInput,resId){
+  const id=v(idInput); if(!id) return alert('Ingresa un ID');
+  if(!confirm('¿Eliminar?')) return;
+  await req('DELETE',url+'/'+id,null,resId);
+}
+
+async function register(){
+  await req('POST','/auth/register',{nombre:v('r-nombre'),email:v('r-email'),password:v('r-pass'),rol:v('r-rol')},'res-reg');
+}
+async function login(){
+  const d=await req('POST','/auth/login',{email:v('l-email'),password:v('l-pass')},'res-login');
+  if(d?.token){ token=d.token; document.getElementById('tokenDisplay').textContent=token; }
+  else if(d?.data){ document.getElementById('tokenDisplay').textContent='Login OK (sin token JWT generado)'; }
+}
+async function createBook(){
+  await req('POST','/books',{
+    titulo:v('bk-titulo'),isbn:v('bk-isbn'),genero:v('bk-genero'),
+    anio:parseInt(v('bk-anio'))||undefined,
+    copiasDisponibles:parseInt(v('bk-copias'))||0,
+    author:v('bk-author')
+  },'res-bk-post');
+}
+async function createLoan(){
+  await req('POST','/loans',{
+    book:v('ln-book'),reader:v('ln-reader'),
+    fechaPrestamo:v('ln-fp'),fechaDevolucionEsperada:v('ln-fde'),
+    notas:v('ln-notas')||undefined
+  },'res-ln-post');
+}
+async function getLoans(){
+  const s=v('ln-filter');
+  await req('GET','/loans'+(s?'?status='+s:''),null,'res-ln-all');
+}
+async function updateLoan(){
+  const id=v('ln-put-id'); if(!id) return alert('Ingresa un ID');
+  await req('PUT','/loans/'+id+'/status',{estado:v('ln-estado')},'res-ln-put');
+}
+</script>
+</body>
+</html>
